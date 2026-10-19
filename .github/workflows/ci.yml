@@ -37,7 +37,7 @@ jobs:
       - name: Prepare application artifact
         run: |
           mkdir -p dist
-          cp app_final.py test_app.py requirements.txt requirements-dev.txt README.md .env.example dist/
+          cp app_final.py test_app.py index.html requirements.txt requirements-dev.txt README.md .env.example dist/
 
       - name: Upload application artifact
         uses: actions/upload-artifact@v4

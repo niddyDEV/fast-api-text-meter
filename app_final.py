@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 import re
 from pydantic import BaseModel, field_validator
 from collections import Counter
-
+from fastapi.responses import FileResponse
 class TextRequest(BaseModel):
     text: str
 
@@ -76,6 +76,13 @@ def health():
 @app.get('/version')
 def version():
     return {"version": app.version}
+
+@app.get("/", response_class=FileResponse, include_in_schema=False)
+def index():
+    return FileResponse(
+        BASE_DIR / "index.html",
+        media_type="text/html",
+    )
 
 @app.post('/text/stats')
 def text_stats(data: TextRequest):

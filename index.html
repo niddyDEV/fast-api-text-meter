@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TextMeter — анализ текста</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #f4f6fb;
+      color: #202737;
+      font-family: system-ui, sans-serif;
+    }
+
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 32px;
+    }
+
+    .subtitle,
+    .muted {
+      color: #657087;
+    }
+
+    a {
+      color: #4355db;
+    }
+
+    .panel,
+    .card {
+      background: white;
+      border: 1px solid #e1e6f0;
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    textarea,
+    input,
+    button {
+      font: inherit;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 220px;
+      padding: 16px;
+      resize: vertical;
+      border: 1px solid #ccd3e1;
+      border-radius: 10px;
+      line-height: 1.6;
+    }
+
+    textarea:focus,
+    input:focus {
+      outline: 2px solid #6878ef;
+      outline-offset: 2px;
+    }
+
+    .controls {
+      display: flex;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    input {
+      width: 100px;
+      padding: 10px;
+      border: 1px solid #ccd3e1;
+      border-radius: 8px;
+    }
+
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 9px;
+      background: #4355db;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #3445c1;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    #message {
+      min-height: 24px;
+      margin: 16px 0 0;
+      color: #657087;
+    }
+
+    #message.error {
+      color: #b42318;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .card p {
+      margin: 0;
+      color: #657087;
+    }
+
+    .value {
+      display: block;
+      margin-top: 12px;
+      font-size: 32px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    h2 {
+      margin-top: 0;
+      font-size: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 12px 0;
+      border-bottom: 1px solid #edf0f5;
+      text-align: left;
+      overflow-wrap: anywhere;
+    }
+
+    th:last-child,
+    td:last-child {
+      text-align: right;
+    }
+
+    footer {
+      margin-top: 24px;
+      color: #657087;
+      font-size: 14px;
+    }
+
+    @media (max-width: 640px) {
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .panel,
+      .card {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>TextMeter</h1>
+        <p class="subtitle">
+          Статистика текста, время чтения и популярные слова
+        </p>
+      </div>
+
+      <a href="/docs">Документация API ↗</a>
+    </header>
+
+    <section class="panel">
+      <form id="analysis-form">
+        <label for="text">Ваш текст</label>
+
+        <textarea
+          id="text"
+          placeholder="Вставьте текст для анализа..."
+          required
+        ></textarea>
+
+        <div class="controls">
+          <div>
+            <label for="limit">Количество популярных слов</label>
+            <input
+              id="limit"
+              type="number"
+              min="1"
+              max="20"
+              value="5"
+              required
+            >
+          </div>
+
+          <button id="submit-button" type="submit">
+            Анализировать
+          </button>
+        </div>
+      </form>
+
+      <p id="message" role="status" aria-live="polite"></p>
+    </section>
+
+    <section id="results" hidden>
+      <div class="cards">
+        <article class="card">
+          <p>Слова</p>
+          <span id="words" class="value">—</span>
+        </article>
+
+        <article class="card">
+          <p>Символы</p>
+          <span id="characters" class="value">—</span>
+        </article>
+
+        <article class="card">
+          <p>Время чтения</p>
+          <span id="reading-time" class="value">—</span>
+        </article>
+      </div>
+
+      <section class="panel">
+        <h2>Подробности</h2>
+
+        <p>
+          Символов без пробельных знаков:
+          <span id="characters-without-spaces">—</span>
+        </p>
+
+        <p class="muted">
+          Скорость для оценки чтения:
+          <span id="reading-speed">—</span> слов/мин.
+          Время приблизительное.
+        </p>
+      </section>
+
+      <section class="panel" style="margin-top: 20px;">
+        <h2>Популярные слова</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Слово</th>
+              <th scope="col">Повторения</th>
+            </tr>
+          </thead>
+          <tbody id="top-words"></tbody>
+        </table>
+
+        <p id="no-words" class="muted" hidden>
+          В тексте не найдено слов.
+        </p>
+      </section>
+    </section>
+
+    <footer>
+      Текст обрабатывается без сохранения в приложении.
+      Регистр при подсчёте частот не учитывается.
+    </footer>
+  </main>
+
+  <script>
+    const form = document.getElementById("analysis-form");
+    const button = document.getElementById("submit-button");
+    const message = document.getElementById("message");
+    const results = document.getElementById("results");
+
+    const numberFormat = new Intl.NumberFormat("ru-RU", {
+      maximumFractionDigits: 2
+    });
+
+    async function postJSON(url, text) {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ text })
+      });
+
+      if (!response.ok) {
+        let detail = `Ошибка запроса: ${response.status}`;
+
+        try {
+          const body = await response.json();
+
+          if (Array.isArray(body.detail)) {
+            detail = body.detail
+              .map(item => item.msg)
+              .join("; ");
+          } else if (typeof body.detail === "string") {
+            detail = body.detail;
+          }
+        } catch {
+        }
+
+        throw new Error(detail);
+      }
+
+      return response.json();
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const text = document.getElementById("text").value;
+      const limit = Number(document.getElementById("limit").value);
+
+      message.classList.remove("error");
+      results.hidden = true;
+
+      if (!text.trim()) {
+        message.textContent = "Введите текст, а не только пробелы.";
+        message.classList.add("error");
+        return;
+      }
+
+      if (!Number.isInteger(limit) || limit < 1 || limit > 20) {
+        message.textContent = "Укажите количество слов от 1 до 20.";
+        message.classList.add("error");
+        return;
+      }
+
+      button.disabled = true;
+      message.textContent = "Анализируем текст…";
+
+      try {
+        const [stats, reading, frequency] = await Promise.all([
+          postJSON("/text/stats", text),
+          postJSON("/text/reading-time", text),
+          postJSON(`/text/top-words?limit=${limit}`, text)
+        ]);
+
+        document.getElementById("words").textContent =
+          numberFormat.format(stats.words);
+
+        document.getElementById("characters").textContent =
+          numberFormat.format(stats.characters);
+
+        document.getElementById("characters-without-spaces").textContent =
+          numberFormat.format(stats.characters_without_spaces);
+
+        document.getElementById("reading-time").textContent =
+          `${numberFormat.format(reading.estimated_seconds)} сек.`;
+
+        document.getElementById("reading-speed").textContent =
+          numberFormat.format(reading.reading_speed_wpm);
+
+        const tbody = document.getElementById("top-words");
+        tbody.replaceChildren();
+
+        for (const item of frequency.top_words) {
+          const row = document.createElement("tr");
+          const wordCell = document.createElement("td");
+          const countCell = document.createElement("td");
+
+          wordCell.textContent = item.word;
+          countCell.textContent = numberFormat.format(item.count);
+
+          row.append(wordCell, countCell);
+          tbody.append(row);
+        }
+
+        document.getElementById("no-words").hidden =
+          frequency.top_words.length !== 0;
+
+        results.hidden = false;
+        message.textContent = "Анализ завершён.";
+      } catch (error) {
+        message.classList.add("error");
+
+        message.textContent = error instanceof TypeError
+          ? "Не удалось получить результат. Проверьте, запущен ли сервер."
+          : error.message;
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

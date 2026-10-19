@@ -9,6 +9,13 @@ def client():
     with TestClient(app_final.app) as test_client:
         yield test_client
 
+def test_index_page(client):
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
+    assert "TextMeter" in response.text
+    assert 'id="analysis-form"' in response.text
 
 def test_health(client):
     response = client.get("/health")
