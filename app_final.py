@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 import uvicorn
 import logging
 from pathlib import Path
@@ -7,6 +7,7 @@ import os
 from contextlib import asynccontextmanager
 import re
 from pydantic import BaseModel, field_validator
+from collections import Counter
 
 class TextRequest(BaseModel):
     text: str
@@ -114,6 +115,34 @@ def text_reading_time(data: TextRequest):
         'reading_speed_wpm': READING_SPEED_WPM,
         'estimated_second': estimated_second,
     }
+
+@app.post('/text/top-words')
+def top_words(
+    data: TextRequest,
+    limit: int = Query(default=5, ge=1, le=20, description="Максимальное количество слов в результатах")
+):
+    words = extract_words(data.text.lower())
+    words_count = Counter(words)
+    
+    sorted_words = sorted(words_count.items(), key=lambda item: (-item[1], item[0]))
+    
+    result = [
+        {
+            "word": word,
+            "count": count,
+        }
+        for word, count in sorted_words[:limit]
+    ]
+
+    logger.info(
+        'Анализ частоты слов: words_count=%s, limit=%s, result=%s',
+        len(words),
+        len(words_count),
+        limit,
+        len(result)
+    )
+    
+    return {'top_words': result}
 
 if __name__ == "__main__":
     uvicorn.run(app)
