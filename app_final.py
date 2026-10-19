@@ -5,6 +5,21 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 from contextlib import asynccontextmanager
+import re
+from pydantic import BaseModel, field_validator
+
+class TextRequest(BaseModel):
+    text: str
+
+    @field_validator("text")
+    @classmethod
+    def validate_text(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Текст не может быть пустым")
+        return value
+
+def extract_words(text: str) -> list[str]:
+    return re.findall(r"[^\W_]+", text)
 
 # Настройка значений сервиса
 BASE_DIR = Path(__file__).resolve().parent
@@ -45,7 +60,7 @@ async def lifespan(app: FastAPI):
     finally:
         logger.info("TextMeter остановлен")
 
-# FastAPI эндпоинты
+#FastAPI и эндпоинты
 app = FastAPI(
     title='TextMeter',
     description='Service for text analyzing',
@@ -61,6 +76,27 @@ def health():
 def version():
     return {"version": app.version}
 
+@app.post('/text/stats')
+def text_stats(data: TextRequest):
+    text = data.text
+    words = extract_words(text)
+    
+    result = {
+        "words": len(words),
+        "characters": len(text),
+        "characters_without_spaces": sum(1 for char in text if not char.isspace()),
+    }
+    
+    logger.info(
+        'Статистика текста: words=%s, characters=%s, characters_without_spaces=%s',
+        result["words"],
+        result["characters"],
+        result["characters_without_spaces"]
+    )
+    
+    return result
+
 if __name__ == "__main__":
     uvicorn.run(app)
+    
 
