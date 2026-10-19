@@ -96,6 +96,25 @@ def text_stats(data: TextRequest):
     
     return result
 
+@app.post('/text/reading-time')
+def text_reading_time(data: TextRequest):
+    words_count = len(extract_words(data.text))
+    
+    estimated_second = round(words_count / READING_SPEED_WPM * 60, 2)
+    
+    logger.info(
+        'Время чтения текста: words_count=%s, speed_wpm=%s, estimated_second=%s',
+        words_count,
+        READING_SPEED_WPM,
+        estimated_second,
+    )
+    
+    return {
+        'words': words_count,
+        'reading_speed_wpm': READING_SPEED_WPM,
+        'estimated_second': estimated_second,
+    }
+
 if __name__ == "__main__":
     uvicorn.run(app)
     
