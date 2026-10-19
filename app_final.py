@@ -101,19 +101,19 @@ def text_stats(data: TextRequest):
 def text_reading_time(data: TextRequest):
     words_count = len(extract_words(data.text))
     
-    estimated_second = round(words_count / READING_SPEED_WPM * 60, 2)
+    estimated_seconds = round(words_count / READING_SPEED_WPM * 60, 2)
     
     logger.info(
-        'Время чтения текста: words_count=%s, speed_wpm=%s, estimated_second=%s',
+        'Время чтения текста: words_count=%s, speed_wpm=%s, estimated_seconds=%s',
         words_count,
         READING_SPEED_WPM,
-        estimated_second,
+        estimated_seconds,
     )
     
     return {
         'words': words_count,
         'reading_speed_wpm': READING_SPEED_WPM,
-        'estimated_second': estimated_second,
+        'estimated_seconds': estimated_seconds,
     }
 
 @app.post('/text/top-words')
@@ -135,7 +135,7 @@ def top_words(
     ]
 
     logger.info(
-        'Анализ частоты слов: words_count=%s, limit=%s, result=%s',
+        'Анализ частоты слов: words_count=%s, unique_words_count=%s, limit=%s, result=%s',
         len(words),
         len(words_count),
         limit,
