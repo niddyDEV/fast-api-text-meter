@@ -19,6 +19,10 @@ class TextRequest(BaseModel):
             raise ValueError("Текст не может быть пустым")
         return value
 
+RUSSIAN_VOWELS = frozenset("аеёиоуыэюя")
+RUSSIAN_CONSONANTS = frozenset("бвгджзйклмнпрстфхцчшщ")
+RUSSIAN_SIGNS = frozenset("ьъ")
+
 def extract_words(text: str) -> list[str]:
     return re.findall(r"[^\W_]+", text)
 
@@ -93,13 +97,19 @@ def text_stats(data: TextRequest):
         "words": len(words),
         "characters": len(text),
         "characters_without_spaces": sum(1 for char in text if not char.isspace()),
+        "vowels": sum(1 for char in text if char.lower() in RUSSIAN_VOWELS),
+        "consonants": sum(1 for char in text if char.lower() in RUSSIAN_CONSONANTS),
+        "signs": sum(1 for char in text if char in RUSSIAN_SIGNS),
     }
     
     logger.info(
-        'Статистика текста: words=%s, characters=%s, characters_without_spaces=%s',
+        'Статистика текста: words=%s, characters=%s, characters_without_spaces=%s, vowels=%s, consonants=%s, signs=%s',
         result["words"],
         result["characters"],
-        result["characters_without_spaces"]
+        result["characters_without_spaces"],
+        result["vowels"],
+        result["consonants"],
+        result["signs"],
     )
     
     return result

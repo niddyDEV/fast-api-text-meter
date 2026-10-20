@@ -261,6 +261,20 @@
           Символов без пробельных знаков:
           <span id="characters-without-spaces">—</span>
         </p>
+        <p>
+            Гласных русских букв:
+            <span id="vowels">—</span>
+        </p>
+
+        <p>
+            Согласных русских букв:
+            <span id="consonants">—</span>
+        </p>
+
+        <p>
+            Мягких и твёрдых знаков:
+            <span id="soft-hard-signs">—</span>
+        </p>
 
         <p class="muted">
           Скорость для оценки чтения:
@@ -374,6 +388,15 @@
 
         document.getElementById("characters-without-spaces").textContent =
           numberFormat.format(stats.characters_without_spaces);
+
+        document.getElementById("vowels").textContent =
+          numberFormat.format(stats.vowels);
+
+        document.getElementById("consonants").textContent =
+          numberFormat.format(stats.consonants);
+
+        document.getElementById("signs").textContent =
+          numberFormat.format(stats.signs);
 
         document.getElementById("reading-time").textContent =
           `${numberFormat.format(reading.estimated_seconds)} сек.`;
