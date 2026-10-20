@@ -42,6 +42,9 @@ def test_text_stats(client):
         "words": 2,
         "characters": 12,
         "characters_without_spaces": 11,
+        "vowels": 3,
+        "consonants": 6,
+        "signs": 0,
     }
 
 
@@ -56,6 +59,9 @@ def test_text_stats_with_spaces(client):
         "words": 2,
         "characters": 12,
         "characters_without_spaces": 10,
+        "vowels": 3,
+        "consonants": 6,
+        "signs": 0,
     }
 
 
@@ -205,3 +211,34 @@ def test_missing_text_rejected(client, endpoint):
     )
 
     assert response.status_code == 422
+    
+@pytest.mark.parametrize(
+    "text, vowels, consonants, signs",
+    [
+        ("Привет, мир!", 3, 6, 0),
+        ("АЕЁИОУЫЭЮЯ", 10, 0, 0),
+        ("Йй", 0, 2, 0),
+        ("Съешь", 1, 2, 2),
+        ("Python 123!", 0, 0, 0),
+        ("!!!", 0, 0, 0),
+    ],
+)
+def test_russian_letter_counts(
+    client,
+    text,
+    vowels,
+    consonants,
+    signs,
+):
+    response = client.post(
+        "/text/stats",
+        json={"text": text},
+    )
+
+    assert response.status_code == 200
+
+    result = response.json()
+
+    assert result["vowels"] == vowels
+    assert result["consonants"] == consonants
+    assert result["signs"] == signs
